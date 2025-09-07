@@ -5,8 +5,11 @@ import SignInFormClient from '@/features/auth/components/signin-form-client'
 const SignInPage = () => {
   return (
     <>
-    {/* <Image/> */}
-    <h1 className='text-white'>logo</h1>
+    <Image src={"/NeuroIDE.png"} alt="Login-Image" height={300} 
+        width={300}
+        className="m-6"
+        />
+    
     <SignInFormClient/>
 
     
