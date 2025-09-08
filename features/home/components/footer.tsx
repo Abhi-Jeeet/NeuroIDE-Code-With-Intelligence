@@ -2,7 +2,7 @@ import React from 'react'
 
 const Footer = () => {
   return (
-    <div>Footer</div>
+    <div className='text-center'>Made with ♥ by Abhijeet © 2025 NeuroIDE. All rights reserved.</div>
   )
 }
 
