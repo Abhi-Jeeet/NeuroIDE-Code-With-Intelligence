@@ -46,11 +46,96 @@ interface TemplateOption {
   description: string;
   icon: string;
   color: string;
-  popularity: string;
+  popularity: number;
   tags: string[];
   features: string[];
   category: "frontend" | "backend" | "fullstack";
 }
+
+const templates: TemplateOption[] = [
+  {
+    id: "react",
+    name: "React",
+    description:
+      "A JavaScript library for building user interfaces with component-based architecture",
+    icon: "/react.svg",
+    color: "#61DAFB",
+    popularity: 5,
+    tags: ["UI", "Frontend", "JavaScript"],
+    features: ["Component-Based", "Virtual DOM", "JSX Support"],
+    category: "frontend",
+  },
+  {
+    id: "nextjs",
+    name: "Next.js",
+    description:
+      "The React framework for production with server-side rendering and static site generation",
+    icon: "/nextjs.svg",
+    color: "#000000",
+    popularity: 4,
+    tags: ["React", "SSR", "Fullstack"],
+    features: ["Server Components", "API Routes", "File-based Routing"],
+    category: "fullstack",
+  },
+  {
+    id: "express",
+    name: "Express",
+    description:
+      "Fast, unopinionated, minimalist web framework for Node.js to build APIs and web applications",
+    icon: "/expressjs.svg",
+    color: "#000000",
+    popularity: 4,
+    tags: ["Node.js", "API", "Backend"],
+    features: ["Middleware", "Routing", "HTTP Utilities"],
+    category: "backend",
+  },
+  {
+    id: "vue",
+    name: "Vue.js",
+    description:
+      "Progressive JavaScript framework for building user interfaces with an approachable learning curve",
+    icon: "/vue.js.png",
+    color: "#4FC08D",
+    popularity: 4,
+    tags: ["UI", "Frontend", "JavaScript"],
+    features: ["Reactive Data Binding", "Component System", "Virtual DOM"],
+    category: "frontend",
+  },
+  {
+    id: "hono",
+    name: "Hono",
+    description:
+      "Fast, lightweight, built on Web Standards. Support for any JavaScript runtime.",
+    icon: "/hono.svg",
+    color: "#e36002",
+    popularity: 3,
+    tags: ["Node.js", "TypeScript", "Backend"],
+    features: [
+      "Dependency Injection",
+      "TypeScript Support",
+      "Modular Architecture",
+    ],
+    category: "backend",
+  },
+  {
+    id: "angular",
+    name: "Angular",
+    description:
+      "Angular is a web framework that empowers developers to build fast, reliable applications.",
+    icon: "/angular.svg",
+    color: "#DD0031",
+    popularity: 3,
+    tags: ["React", "Fullstack", "JavaScript"],
+    features: [
+      "Reactive Data Binding",
+      "Component System",
+      "Virtual DOM",
+      "Dependency Injection",
+      "TypeScript Support",
+    ],
+    category: "fullstack",
+  },
+];
 
 const TemplateSelectionModal = ({
   isOpen,
@@ -64,6 +149,36 @@ const TemplateSelectionModal = ({
     "all" | "frontend" | "backend" | "fullstack"
   >();
   const [projectName, setProjectName] = useState("");
+
+  const filteredTemplates = templates.filter((template)=>{
+    const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.tags.some((tage)=> tage.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = category ==="all" || template.category === category;
+
+    return matchesCategory && matchesSearch;
+
+  })
+
+  const handleContinue=()=>{
+    if(selectedTemplate){
+      setStep("configure");
+    }
+  }
+
+  const handleSelectTemplate = (templateId:string)=>{
+    setSelectedTemplate(templateId)
+  }
+
+  const renderStars = (count:number)=>{
+    return Array(5).fill(0).map((_, i)=>(
+      <Star key={i} size={14} className={
+        i < count ? "fill-yellow-400 text-yellow-400": "text-gray-300"
+      }/>
+    ))
+  }
+
   return (
     <Dialog
       open={isOpen}
@@ -81,7 +196,7 @@ const TemplateSelectionModal = ({
         {step === "select" ? (
             <>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#e93f3f] flex items-center gap-2">
+            <DialogTitle className="text-2xl font-bold text-[#38b7ff] flex items-center gap-2">
               <Plus size={24} className="text-[#38b7ff]" />
               Select a Template
             </DialogTitle>
@@ -113,12 +228,137 @@ const TemplateSelectionModal = ({
                     </Tabs>
 
                 </div>
+<RadioGroup
+                value={selectedTemplate || ""}
+                onValueChange={handleSelectTemplate}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredTemplates.length > 0 ? (
+                    filteredTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className={`relative flex p-6 border rounded-lg cursor-pointer
+                          transition-all duration-300 hover:scale-[1.02]
+                          ${
+                            selectedTemplate === template.id
+                              ? "border-[#38b7ff]  shadow-[0_0_0_1px_#38b7ff,0_8px_20px_rgba(233,63,63,0.15)]"
+                              : "hover:border-[#38b7ff] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
+                          }`}
+                        onClick={() => handleSelectTemplate(template.id)}
+                      >
+                        <div className="absolute top-4 right-4 flex gap-1">
+                          {renderStars(template.popularity)}
+                        </div>
 
+                        {selectedTemplate === template.id && (
+                          <div className="absolute top-2 left-2 bg-[#38b7ff] text-white rounded-full p-1">
+                            <Check size={14} />
+                          </div>
+                        )}
+
+                        <div className="flex gap-4">
+                          <div
+                            className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center rounded-full"
+                            style={{ backgroundColor: `${template.color}15` }}
+                          >
+                            <Image
+                              src={template.icon || "/placeholder.svg"}
+                              alt={`${template.name} icon`}
+                              width={70}
+                              height={70}
+                              className="object-contain"
+                            />
+                          </div>
+
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-lg font-semibold">
+                                {template.name}
+                              </h3>
+                              <div className="flex gap-1">
+                                {template.category === "frontend" && (
+                                  <Code size={14} className="text-blue-500" />
+                                )}
+                                {template.category === "backend" && (
+                                  <Server
+                                    size={14}
+                                    className="text-green-500"
+                                  />
+                                )}
+                                {template.category === "fullstack" && (
+                                  <Globe
+                                    size={14}
+                                    className="text-purple-500"
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {template.description}
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 mt-auto">
+                              {template.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="text-xs px-2 py-1 border rounded-2xl"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <RadioGroupItem
+                          value={template.id}
+                          id={template.id}
+                          className="sr-only"
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 flex flex-col items-center justify-center p-8 text-center">
+                      <Search size={48} className="text-gray-300 mb-4" />
+                      <h3 className="text-lg font-medium">
+                        No templates found
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Try adjusting your search or filters
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </RadioGroup>
+                  <div className="flex justify-between gap-3 mt-4 pt-4 border-t">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Clock size={14} className="mr-1"/>
+                    <span>
+                      Estimated setup time:{" "}
+                      {selectedTemplate ? "2-5 minutes" : "select a template"}
+                    </span>
+                    </div>
+
+                    <div className="flex gap-1">
+                      <Button variant={"outline"} onClick={onClose}>
+                        Cancel
+                      </Button>
+                      <Button className="bg-[#38b7ff] hover:bg-[#38b7ff] text-white" onClick={handleContinue}>
+                        Continue <ChevronRight size={16} className="ml-1"/>
+                      </Button>
+                    </div>
+
+                  </div>
             </div>
 
           </>
         ) : (
-          <></>
+          <>
+          <p>
+            Configure
+          </p>
+          </>
         )}
       </DialogContent>
     </Dialog>
