@@ -1,5 +1,5 @@
 import EmptyState from '@/components/ui/empty-state';
-import { deleteProjectById, duplicateProjectById, editProjectById, getAllPlaygroundsForUser } from '@/features/dashboard/actions';
+import { getAllPlaygroundsForUser } from '@/features/dashboard/actions';
 
 import AddNewButton from '@/features/dashboard/components/add-new-button'
 import AddRepoButton from '@/features/dashboard/components/add-repo-button'
@@ -20,9 +20,6 @@ const page = async() => {
           playgrounds && playgrounds.length ===0 ? (<EmptyState title='No Projcts Found' description='Create a new Project to get Started' imageSrc='/emptyState.svg'/>):(
             <ProjectTable 
               projects = {playgrounds || []}
-              onDeleteProject ={deleteProjectById}
-              onUpdateProject = {editProjectById}
-              onDuplicateProject = {async (id: string) => { await duplicateProjectById(id); }}
             />
           )
         }

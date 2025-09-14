@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   MoreHorizontal,
   Edit3,
@@ -53,17 +53,11 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { deleteProjectById, duplicateProjectById, editProjectById } from "../actions";
 
 
 interface ProjectTableProps {
   projects: Project[];
-  onUpdateProject?: (
-    id: string,
-    data: { title: string; description: string }
-  ) => Promise<void>;
-  onDeleteProject?: (id: string) => Promise<void>;
-  onDuplicateProject?: (id: string) => Promise<void>;
-  onMarkasFavorite?: (id: string) => Promise<void>;
 }
 
 interface EditProjectData {
@@ -73,10 +67,6 @@ interface EditProjectData {
 
 export default function ProjectTable({
   projects,
-  onUpdateProject,
-  onDeleteProject,
-  onDuplicateProject,
-  onMarkasFavorite,
 }: ProjectTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -85,7 +75,7 @@ export default function ProjectTable({
     title: "",
     description: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [favoutrie, setFavourite] = useState(false);
 
   const handleEditClick = (project: Project) => {
@@ -104,67 +94,52 @@ export default function ProjectTable({
   };
 
   const handleUpdateProject = async () => {
-    if (!selectedProject || !onUpdateProject) return;
+    if (!selectedProject) return;
 
-    setIsLoading(true);
-    try {
-      await onUpdateProject(selectedProject.id, editData);
-      setEditDialogOpen(false);
-      setSelectedProject(null);
-      toast.success("Project updated successfully");
-    } catch (error) {
-      toast.error("Failed to update project");
-      console.error("Error updating project:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    startTransition(async () => {
+      try {
+        await editProjectById(selectedProject.id, editData);
+        setEditDialogOpen(false);
+        setSelectedProject(null);
+        toast.success("Project updated successfully");
+      } catch (error) {
+        toast.error("Failed to update project");
+        console.error("Error updating project:", error);
+      }
+    });
   };
 
   const handleMarkasFavorite = async (project: Project) => {
-    if (!onMarkasFavorite) return;
-
-    setIsLoading(true);
-    try {
-      await onMarkasFavorite(project.id);
-      toast.success("Project marked as favorite successfully");
-    } catch (error) {
-      toast.error("Failed to mark project as favorite");
-      console.error("Error marking project as favorite:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    // This functionality can be implemented later if needed
+    toast.info("Mark as favorite functionality not yet implemented");
   };
 
   const handleDeleteProject = async () => {
-    if (!selectedProject || !onDeleteProject) return;
+    if (!selectedProject) return;
 
-    setIsLoading(true);
-    try {
-      await onDeleteProject(selectedProject.id);
-      setDeleteDialogOpen(false);
-      setSelectedProject(null);
-      toast.success("Project deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete project");
-      console.error("Error deleting project:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    startTransition(async () => {
+      try {
+        await deleteProjectById(selectedProject.id);
+        setDeleteDialogOpen(false);
+        setSelectedProject(null);
+        toast.success("Project deleted successfully");
+      } catch (error) {
+        toast.error("Failed to delete project");
+        console.error("Error deleting project:", error);
+      }
+    });
   };
 
   const handleDuplicateProject = async (project: Project) => {
-    if (!onDuplicateProject) return;
-
-    setIsLoading(true);
-    try {
-      await onDuplicateProject(project.id);
-      toast.success("Project duplicated successfully");
-    } catch (error) {
-      toast.error("Failed to duplicate project");
-      console.error("Error duplicating project:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    startTransition(async () => {
+      try {
+        await duplicateProjectById(project.id);
+        toast.success("Project duplicated successfully");
+      } catch (error) {
+        toast.error("Failed to duplicate project");
+        console.error("Error duplicating project:", error);
+      }
+    });
   };
 
   const copyProjectUrl = (projectId: string) => {
@@ -198,7 +173,7 @@ export default function ProjectTable({
                       <span className="font-semibold">{project.title}</span>
                     </Link>
                     <span className="text-sm text-gray-500 line-clamp-1">
-                      {project.description}
+                      {project.description || "No description"}
                     </span>
                   </div>
                 </TableCell>
@@ -224,7 +199,7 @@ export default function ProjectTable({
                         className="object-cover"
                       />
                     </div>
-                    <span className="text-sm">{project.user.name}</span>
+                    <span className="text-sm">{project.user.name || "Unknown User"}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -340,16 +315,16 @@ export default function ProjectTable({
               type="button"
               variant="outline"
               onClick={() => setEditDialogOpen(false)}
-              disabled={isLoading}
+              disabled={isPending}
             >
               Cancel
             </Button>
             <Button
               type="button"
               onClick={handleUpdateProject}
-              disabled={isLoading || !editData.title.trim()}
+              disabled={isPending || !editData.title.trim()}
             >
-              {isLoading ? "Saving..." : "Save Changes"}
+              {isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -367,13 +342,13 @@ export default function ProjectTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProject}
-              disabled={isLoading}
+              disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isLoading ? "Deleting..." : "Delete Project"}
+              {isPending ? "Deleting..." : "Delete Project"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
