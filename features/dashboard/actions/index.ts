@@ -66,6 +66,7 @@ export const deleteProjectById = async(id:string)=>{
         revalidatePath("/dashboard");
     } catch (error) {
         console.log(error);
+        throw new Error("Failed to delete project");
     }
 }
 
@@ -75,8 +76,10 @@ export const editProjectById = async(id:string, data:{title:string, description:
             where:{id},
             data:data
         })
+        revalidatePath("/dashboard");
     } catch (error) {
         console.log(error);
+        throw new Error("Failed to update project");
     }
 }
 
@@ -100,7 +103,7 @@ export const duplicateProjectById = async(id:string)=>{
         return duplicatePlayground
     } catch (error) {
         console.log(error);
-        return null;
+        throw new Error("Failed to duplicate project");
     }
 }
 
