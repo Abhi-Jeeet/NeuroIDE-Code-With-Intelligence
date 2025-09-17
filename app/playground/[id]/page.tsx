@@ -1,6 +1,7 @@
 "use client";
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import TemplateFileTree from '@/features/playground/components/template-file-tree';
 import { usePlayground } from '@/features/playground/hooks/usePlayground';
 import { useParams } from 'next/navigation';
 import React from 'react'
@@ -12,6 +13,7 @@ const page = () => {
     <div>
        <>
        {/* TODO: TEMPLATES TREE */}
+       <TemplateFileTree/>
        <SidebarInset>
         <header className='flex h-16 shrink-0 items-center gap-2 border-b px-4'>
             <SidebarTrigger className='-ml-1'/>
