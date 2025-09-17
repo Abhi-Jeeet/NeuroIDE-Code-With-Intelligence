@@ -21,3 +21,25 @@ export const getPlaygroundById = async(id:string)=>{
         console.log(error)
     }
 }
+
+export const saveUpdatedCode = async (playgroundId: string, data:TemplateFolder)=>{
+    const user = await currentUser();
+    if(!user) return null;
+
+    try {
+        const updatedPlayground = await db.templateFile.upsert({
+            where:{
+                playgroundId
+            },
+            update:{
+                content:JSON.stringify(data)
+            },
+            create:{
+                playgroundId,
+                content:JSON.stringify(data)
+            }
+        })
+    } catch (error) {
+        
+    }
+}
