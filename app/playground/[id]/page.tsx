@@ -18,7 +18,7 @@ const page = () => {
             <Separator orientation='vertical' className='mr-2 h-4'/>
             <div className='flex flex-1 items-center gap-2'>
                 <div className='flex flex-col flex-1'>
-                  {playgroundData?.name || "Code Playground"}
+                  {playgroundData?.title || "Code Playground"}
                     
 
                 </div>

@@ -6,7 +6,7 @@ import type { TemplateFolder } from '../lib/path-to-json';
 
 interface PlaygroundData {
   id: string;
-  name?: string;
+  title?: string;
   [key: string]: any;
 }
 
