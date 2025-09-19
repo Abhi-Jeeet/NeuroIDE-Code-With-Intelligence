@@ -1,12 +1,12 @@
 "use client";
 import * as React from 'react';
-import { ChevronRight, File, Plus, FilePlus, FolderPlus, MoreHorizontal, Trash2, Edit3 } from 'lucide-react';
+import { ChevronRight, File, Folder,Plus, FilePlus, FolderPlus, MoreHorizontal, Trash2, Edit3 } from 'lucide-react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarRail  } from '@/components/ui/sidebar';
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import TemplateNode from './template-node';
 
 interface TemplateFile{
     filename:string
@@ -23,7 +24,7 @@ interface TemplateFile{
 }
 
 interface TemplateFolder{
-    foldername:string
+    folderName:string
     items:(TemplateFile | TemplateFolder)[]
 }
 
@@ -55,12 +56,71 @@ const TemplateFileTree = ({data, onFileSelect, selectedFile, title="Files Explor
     <Sidebar>
         <SidebarContent>
             <SidebarGroup>
-                <SidebarGroupLabel></SidebarGroupLabel>
+                <SidebarGroupLabel>{title}</SidebarGroupLabel>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <SidebarGroupAction>
+                            <Plus className='h-4 w-4'/>
+                        </SidebarGroupAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                        <DropdownMenuItem onClick={()=>{}}>
+                            <FilePlus className='h-4 w-4 mr-2'/>
+                            New File
+
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={()=>{}}>
+                            <FolderPlus className='h-4 w-4 mr-2' />
+                            New Folder
+                        </DropdownMenuItem>
+
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <SidebarGroupContent>
+                    <Sidebar>
+                        {
+                            isRootFolder?(
+                                (data as TemplateFolder).items.map((child, index) => (
+                                    <TemplateNode
+                                        key={index}
+                                        item={child}
+                                        level={0}
+                                        path=""
+                                        onFileSelect={onFileSelect}
+                                        selectedFile={selectedFile}
+                                        onAddFile={onAddFile}
+                                        onAddFolder={onAddFolder}
+                                        onDeleteFile={onDeleteFile}
+                                        onDeleteFolder={onDeleteFolder}
+                                        onRenameFile={onRenameFile}
+                                        onRenameFolder={onRenameFolder}
+                                    />
+                                ))
+                            ):(
+                                <TemplateNode
+                                    item={data}
+                                    level={0}
+                                    path=""
+                                    onFileSelect={onFileSelect}
+                                    selectedFile={selectedFile}
+                                    onAddFile={onAddFile}
+                                    onAddFolder={onAddFolder}
+                                    onDeleteFile={onDeleteFile}
+                                    onDeleteFolder={onDeleteFolder}
+                                    onRenameFile={onRenameFile}
+                                    onRenameFolder={onRenameFolder}
+                                />
+                            )
+                        }
+                    </Sidebar>
+                </SidebarGroupContent>
             </SidebarGroup>
         </SidebarContent>
     </Sidebar>
     
   )
 }
+
+
 
 export default TemplateFileTree
