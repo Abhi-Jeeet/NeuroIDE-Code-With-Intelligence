@@ -77,7 +77,7 @@ const TemplateFileTree = ({data, onFileSelect, selectedFile, title="Files Explor
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <SidebarGroupContent>
-                    <Sidebar>
+                    <SidebarMenu>
                         {
                             isRootFolder?(
                                 (data as TemplateFolder).items.map((child, index) => (
@@ -112,7 +112,7 @@ const TemplateFileTree = ({data, onFileSelect, selectedFile, title="Files Explor
                                 />
                             )
                         }
-                    </Sidebar>
+                    </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>
         </SidebarContent>
