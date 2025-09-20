@@ -66,6 +66,7 @@ interface FileExplorerState {
   updateFileContent: (fileId: string, content: string) => void;
 }
 
+//@ts-ignore
 export const useFileExplorer = create<FileExplorerState>((set, get)=>({
     templateData:null,
     playgroundId:"",
@@ -81,58 +82,57 @@ export const useFileExplorer = create<FileExplorerState>((set, get)=>({
     setOpenFiles:(files)=> set({openFiles: files}),
     setActiveFileId: (fileId) => set({activeFileId: fileId}),
 
-    openFile:(file)=>{
-        const fileId = generateFileId(file, get(), templateData!);
-        const {openFiles} = get();
-        const existingFile = openFiles.find((f)=>f.id===fileId)
+  //   openFile:(file)=>{
+  //       const fileId = generateFileId(file, get(), templateData!);
+  //       const {openFiles} = get();
+  //       const existingFile = openFiles.find((f)=>f.id===fileId)
 
-        if(existingFile){
-            set({activeFileId: fileId, editorContent:existingFile.content});
-            return;
-        }
+  //       if(existingFile){
+  //           set({activeFileId: fileId, editorContent:existingFile.content});
+  //           return;
+  //       }
 
-        const newOpenFile: OpenFile = {
-            ...file,
-            id:fileId,
-            hasUnsavedChanges: false,
-            content: file.content || "",
-            originalContent: file.content || "",
-        };
-
-        set((state)=>({
-            openFile: [...state.openFiles, newOpenFile],
-            activeFileId: fileId,
-            editorContent: file.content || "",
-        }))
-    }
-
-    closeFile: (fileId) => {
-    const { openFiles, activeFileId } = get();
-    const newFiles = openFiles.filter((f) => f.id !== fileId);
+  //       const newOpenFile: OpenFile = {
+  //           ...file,
+  //           id:fileId,
+  //           hasUnsavedChanges: false,
+  //           content: file.content || "",
+  //           originalContent: file.content || "",
+  //       };
+  //       set((state)=>({
+  //           openFiles: [...state.openFiles, newOpenFile],
+  //           activeFileId: fileId,
+  //           editorContent: file.content || "",
+  //       }))
+  //   }
+ 
+  //   closeFile: (fileId) => {
+  //   const { openFiles, activeFileId } = get();
+  //   const newFiles = openFiles.filter((f) => f.id !== fileId);
     
-    // If we're closing the active file, switch to another file or clear active
-    let newActiveFileId = activeFileId;
-    let newEditorContent = get().editorContent;
+  //   // If we're closing the active file, switch to another file or clear active
+  //   let newActiveFileId = activeFileId;
+  //   let newEditorContent = get().editorContent;
     
-    if (activeFileId === fileId) {
-      if (newFiles.length > 0) {
-        // Switch to the last file in the list
-        const lastFile = newFiles[newFiles.length - 1];
-        newActiveFileId = lastFile.id;
-        newEditorContent = lastFile.content;
-      } else {
-        // No files left
-        newActiveFileId = null;
-        newEditorContent = "";
-      }
-    }
+  //   if (activeFileId === fileId) {
+  //     if (newFiles.length > 0) {
+  //       // Switch to the last file in the list
+  //       const lastFile = newFiles[newFiles.length - 1];
+  //       newActiveFileId = lastFile.id;
+  //       newEditorContent = lastFile.content;
+  //     } else {
+  //       // No files left
+  //       newActiveFileId = null;
+  //       newEditorContent = "";
+  //     }
+  //   }
 
-    set({
-      openFiles: newFiles,
-      activeFileId: newActiveFileId,
-      editorContent: newEditorContent,
-    });
-  },
+  //   set({
+  //     openFiles: newFiles,
+  //     activeFileId: newActiveFileId,
+  //     editorContent: newEditorContent,
+  //   });
+  // },
 
   closeAllFiles: () => {
     set({
