@@ -75,12 +75,12 @@ const TemplateFileTree = ({data, onFileSelect, selectedFile, title="Files Explor
                         </SidebarGroupAction>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
-                        <DropdownMenuItem onClick={()=>{}}>
+                        <DropdownMenuItem onClick={handleAddRootFile}>
                             <FilePlus className='h-4 w-4 mr-2'/>
                             New File
 
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={()=>{}}>
+                        <DropdownMenuItem onClick={handleAddRootFolder}>
                             <FolderPlus className='h-4 w-4 mr-2' />
                             New Folder
                         </DropdownMenuItem>
@@ -127,6 +127,19 @@ const TemplateFileTree = ({data, onFileSelect, selectedFile, title="Files Explor
                 </SidebarGroupContent>
             </SidebarGroup>
         </SidebarContent>
+        <SidebarRail/>
+
+        <NewFileDialog
+        isOpen={isNewFileDialogOpen}
+        onClose={()=>{setIsNewFileDialogOpen(false)}}
+        onCreateFile={()=>{}}/>
+
+                <NewFolderDialog
+        isOpen={isNewFolderDialogOpen}
+        onClose={()=>{setIsNewFolderDialogOpen(false)}}
+        onCreateFolder={()=>{}}/>
+        
+
     </Sidebar>
     
   )
@@ -142,7 +155,7 @@ interface NewFileDialogProps{
     onCreateFile: (filename:string, extension: string)=> void
 }
 
-function NewFileDialog({isOpen, onClose, onCreateFile}: NewFileDialogProps){
+export function NewFileDialog({isOpen, onClose, onCreateFile}: NewFileDialogProps){
     const [filename, setFilename] = React.useState("")
     const [extension, setExtension] = React.useState("js")
 
@@ -213,7 +226,7 @@ interface NewFolderDialogProps{
     onCreateFolder: (folderName:string)=> void
 }
 
-function NewFolderDialog({isOpen, onClose, onCreateFolder}: NewFolderDialogProps){
+export function NewFolderDialog({isOpen, onClose, onCreateFolder}: NewFolderDialogProps){
     const [folderName, setFolderName] = React.useState("")
 
 
@@ -272,7 +285,7 @@ interface RenameFileDialogProps {
   currentExtension: string;
 }
 
-function RenameFileDialog({
+export function RenameFileDialog({
   isOpen,
   onClose,
   onRename,
@@ -350,7 +363,7 @@ interface RenameFolderDialogProps {
   currentFolderName: string;
 }
 
-function RenameFolderDialog({
+export function RenameFolderDialog({
   isOpen,
   onClose,
   onRename,
