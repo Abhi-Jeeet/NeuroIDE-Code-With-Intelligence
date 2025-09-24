@@ -326,7 +326,7 @@ const page = () => {
         onAddFile={wrappedHandleAddFile}
         onAddFolder={wrappedHandleAddFolder}
         onDeleteFile={wrappedHandleDeleteFile}
-        onDeleteFolder={wrappedHandleAddFolder}
+        onDeleteFolder={wrappedHandleDeleteFolder}
         onRenameFile={wrappedHandleRenameFile}
         onRenameFolder={wrappedHandleRenameFolder}
         />
