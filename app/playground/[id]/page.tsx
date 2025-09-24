@@ -62,6 +62,71 @@ const page = () => {
       //@ts-ignore
   } = useWebContainer({templateData})
 
+  // Define all wrapped handlers at the top level to avoid conditional hook usage
+  const wrappedHandleAddFile = useCallback(
+    (newFile: TemplateFile, parentPath: string) => {
+      return handleAddFile(
+        newFile,
+        parentPath,
+        writeFileSync!,
+        instance,
+        saveTemplateData
+      );
+    },
+    [handleAddFile, writeFileSync, instance, saveTemplateData]
+  );
+
+  const wrappedHandleAddFolder = useCallback(
+    (newFolder: TemplateFolder, parentPath: string) => {
+      return handleAddFolder(newFolder, parentPath, instance, saveTemplateData);
+    },
+    [handleAddFolder, instance, saveTemplateData]
+  );
+
+  const wrappedHandleDeleteFile = useCallback(
+    (file: TemplateFile, parentPath: string) => {
+      return handleDeleteFile(file, parentPath, saveTemplateData);
+    },
+    [handleDeleteFile, saveTemplateData]
+  );
+
+  const wrappedHandleDeleteFolder = useCallback(
+    (folder: TemplateFolder, parentPath: string) => {
+      return handleDeleteFolder(folder, parentPath, saveTemplateData);
+    },
+    [handleDeleteFolder, saveTemplateData]
+  );
+
+  const wrappedHandleRenameFile = useCallback(
+    (
+      file: TemplateFile,
+      newFilename: string,
+      newExtension: string,
+      parentPath: string
+    ) => {
+      return handleRenameFile(
+        file,
+        newFilename,
+        newExtension,
+        parentPath,
+        saveTemplateData
+      );
+    },
+    [handleRenameFile, saveTemplateData]
+  );
+
+  const wrappedHandleRenameFolder = useCallback(
+    (folder: TemplateFolder, newFolderName: string, parentPath: string) => {
+      return handleRenameFolder(
+        folder,
+        newFolderName,
+        parentPath,
+        saveTemplateData
+      );
+    },
+    [handleRenameFolder, saveTemplateData]
+  );
+
   useEffect(()=>{
     setPlaygroundId(id);
 
@@ -105,7 +170,7 @@ const page = () => {
         const updatedTemplateData = JSON.parse(
           JSON.stringify(latestTemplateData)
         );
-        const updateFileContent = (items: any[]) =>
+        const updateFileContent = (items: any[]): any[] =>
           items.map((item) => {
             if ("folderName" in item) {
               return { ...item, items: updateFileContent(item.items) };
@@ -125,14 +190,14 @@ const page = () => {
         if (writeFileSync) {
           await writeFileSync(filePath, fileToSave.content);
           lastSyncedContent.current.set(fileToSave.id, fileToSave.content);
-          if (instance && instance.fs) {
+          if (instance?.fs) {
             await instance.fs.writeFile(filePath, fileToSave.content);
           }
         }
 
         // Use saveTemplateData to persist changes
         const newTemplateData = await saveTemplateData(updatedTemplateData);
-        setTemplateData(newTemplateData || updatedTemplateData);
+        setTemplateData(newTemplateData ?? updatedTemplateData);
 
         // Update open files
         const updatedOpenFiles = openFiles.map((f) =>
@@ -251,70 +316,6 @@ const page = () => {
       </div>
     );
   }
-
-    const wrappedHandleAddFile = useCallback(
-    (newFile: TemplateFile, parentPath: string) => {
-      return handleAddFile(
-        newFile,
-        parentPath,
-        writeFileSync!,
-        instance,
-        saveTemplateData
-      );
-    },
-    [handleAddFile, writeFileSync, instance, saveTemplateData]
-  );
-
-  const wrappedHandleAddFolder = useCallback(
-    (newFolder: TemplateFolder, parentPath: string) => {
-      return handleAddFolder(newFolder, parentPath, instance, saveTemplateData);
-    },
-    [handleAddFolder, instance, saveTemplateData]
-  );
-
-  const wrappedHandleDeleteFile = useCallback(
-    (file: TemplateFile, parentPath: string) => {
-      return handleDeleteFile(file, parentPath, saveTemplateData);
-    },
-    [handleDeleteFile, saveTemplateData]
-  );
-
-  const wrappedHandleDeleteFolder = useCallback(
-    (folder: TemplateFolder, parentPath: string) => {
-      return handleDeleteFolder(folder, parentPath, saveTemplateData);
-    },
-    [handleDeleteFolder, saveTemplateData]
-  );
-
-  const wrappedHandleRenameFile = useCallback(
-    (
-      file: TemplateFile,
-      newFilename: string,
-      newExtension: string,
-      parentPath: string
-    ) => {
-      return handleRenameFile(
-        file,
-        newFilename,
-        newExtension,
-        parentPath,
-        saveTemplateData
-      );
-    },
-    [handleRenameFile, saveTemplateData]
-  );
-
-  const wrappedHandleRenameFolder = useCallback(
-    (folder: TemplateFolder, newFolderName: string, parentPath: string) => {
-      return handleRenameFolder(
-        folder,
-        newFolderName,
-        parentPath,
-        saveTemplateData
-      );
-    },
-    [handleRenameFolder, saveTemplateData]
-  );
 
   return (
     <TooltipProvider>

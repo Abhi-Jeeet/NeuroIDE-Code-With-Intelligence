@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { NewFileDialog, NewFolderDialog, RenameFolderDialog } from './template-file-tree';
+import { NewFileDialog, NewFolderDialog, RenameFileDialog, RenameFolderDialog } from './template-file-tree';
 interface TemplateFile{
     filename:string
     fileExtension: string
@@ -121,6 +121,34 @@ const TemplateNode = ({
                     </DropdownMenuContent>
                 </DropdownMenu>
                 </div>
+                <RenameFileDialog
+                isOpen={isRenameDialogOpen}
+                onClose={()=>setIsRenameDialogOpen(false)}
+                onRename={handleRenameSubmit}
+                currentFilename={file.filename}
+                currentExtension={file.fileExtension}
+                />
+
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Folder</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete "{fileName}" and all its content?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                            onClick={confirmDelete}
+                            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                            >
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+
+                </AlertDialog>
             </SidebarMenuItem>
         )
 
