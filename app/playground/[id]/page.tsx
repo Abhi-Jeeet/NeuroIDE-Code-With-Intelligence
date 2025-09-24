@@ -10,8 +10,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import PlaygroundEditor from "@/features/playground/components/playground-editor";
+import { useAISuggestions } from "@/features/ai/hooks/useAISuggestion";
+import {PlaygroundEditor} from "@/features/playground/components/playground-editor";
 import TemplateFileTree from "@/features/playground/components/template-file-tree";
+import ToggleAI from "@/features/playground/components/toggle-ai";
 import { useFileExplorer } from "@/features/playground/hooks/useFileExplorer";
 import { usePlayground } from "@/features/playground/hooks/usePlayground";
 import { findFilePath } from "@/features/playground/lib";
@@ -30,6 +32,7 @@ const page = () => {
   const [isPreviewVisible, setIsPreviewVisible] = useState(true)
   const { playgroundData, templateData, isLoading, error, saveTemplateData } =
     usePlayground(id);
+    const aiSuggestion = useAISuggestions();
 
   // Track last synced content for files
   const lastSyncedContent = React.useRef<Map<string, string>>(new Map());
@@ -376,22 +379,12 @@ const page = () => {
                     Save All (Ctrl + Shift + S)
                   </TooltipContent>
                 </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size={"sm"}
-                      variant={"outline"}
-                      onClick={() => {}}
-                      disabled={!hasUnsavedChanges}
-                    >
-                      <Bot className="h-4 w-4" /> ToggleAI
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    ToggleAI
-                  </TooltipContent>
-                </Tooltip>
+                <ToggleAI
+                isEnabled={aiSuggestion.isEnabled}
+                onToggle={aiSuggestion.toggleEnabled}
+                suggestionLoading={aiSuggestion.isLoading}
+                />
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button size={"sm"} variant={"outline"}>
@@ -482,18 +475,18 @@ const page = () => {
                         onContentChange={(value) =>
                           activeFileId && updateFileContent(activeFileId, value)
                         }
-                        // suggestion={aiSuggestions.suggestion}
-                        // suggestionLoading={aiSuggestions.isLoading}
-                        // suggestionPosition={aiSuggestions.position}
-                        // onAcceptSuggestion={(editor, monaco) =>
-                        //   aiSuggestions.acceptSuggestion(editor, monaco)
-                        // }
-                        // onRejectSuggestion={(editor) =>
-                        //   aiSuggestions.rejectSuggestion(editor)
-                        // }
-                        // onTriggerSuggestion={(type, editor) =>
-                        //   aiSuggestions.fetchSuggestion(type, editor)
-                        // }
+                        suggestion={aiSuggestion.suggestion}
+                        suggestionLoading={aiSuggestion.isLoading}
+                        suggestionPosition={aiSuggestion.position}
+                        onAcceptSuggestion={(editor, monaco) =>
+                          aiSuggestion.acceptSuggestion(editor, monaco)
+                        }
+                        onRejectSuggestion={(editor) =>
+                          aiSuggestion.rejectSuggestion(editor)
+                        }
+                        onTriggerSuggestion={(type, editor) =>
+                          aiSuggestion.fetchSuggestion(type, editor)
+                        }
                       />
                     </ResizablePanel>
 
