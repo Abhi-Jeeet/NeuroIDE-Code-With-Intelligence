@@ -14,7 +14,7 @@ interface EnhancePromptRequest {
   }
 }
 
-async function generateAIResponse(messages: ChatMessage[]) {
+async function generateAIResponse(messages: ChatMessage[], retryCount = 0): Promise<string> {
   const systemPrompt = `You are an expert AI coding assistant. You help developers with:
 - Code explanations and debugging
 - Best practices and architecture advice
@@ -26,14 +26,17 @@ Always provide clear, practical answers. When showing code, use proper formattin
 Keep responses concise but comprehensive. Use code blocks with language specification when providing code examples.`
 
   const fullMessages = [{ role: "system", content: systemPrompt }, ...messages]
-
   const prompt = fullMessages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n")
 
+  // Increased timeout to 60 seconds for complex requests
+  const timeoutDuration = 60000
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 15000)
+  const timeoutId = setTimeout(() => controller.abort(), timeoutDuration)
 
   try {
-    const response = await fetch("http://localhost:11434/api/generate", {
+    console.log(`Attempting AI request (attempt ${retryCount + 1}/3)...`)
+    
+    const response = await fetch("http://127.0.0.1:11434/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,18 +69,40 @@ Keep responses concise but comprehensive. Use code blocks with language specific
     if (!data.response) {
       throw new Error("No response from AI model")
     }
+    
+    console.log("AI request completed successfully")
     return data.response.trim()
   } catch (error) {
     clearTimeout(timeoutId)
+    
     if ((error as Error).name === "AbortError") {
-      throw new Error("Request timeout: AI model took too long to respond")
+      const timeoutError = new Error("Request timeout: AI model took too long to respond (60s timeout)")
+      console.error("Request timeout:", timeoutError.message)
+      
+      // Retry with exponential backoff if we haven't exceeded max retries
+      if (retryCount < 2) {
+        console.log(`Retrying request in ${(retryCount + 1) * 2} seconds...`)
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
+        return generateAIResponse(messages, retryCount + 1)
+      }
+      
+      throw timeoutError
     }
+    
     console.error("AI generation error:", error)
+    
+    // Retry for network errors if we haven't exceeded max retries
+    if (retryCount < 2 && (error as Error).message.includes('fetch')) {
+      console.log(`Retrying request in ${(retryCount + 1) * 2} seconds...`)
+      await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
+      return generateAIResponse(messages, retryCount + 1)
+    }
+    
     throw error
   }
 }
 
-async function enhancePrompt(request: EnhancePromptRequest) {
+async function enhancePrompt(request: EnhancePromptRequest, retryCount = 0): Promise<string> {
   const enhancementPrompt = `You are a prompt enhancement assistant. Take the user's basic prompt and enhance it to be more specific, detailed, and effective for a coding AI assistant.
 
 Original prompt: "${request.prompt}"
@@ -93,8 +118,13 @@ Enhanced prompt should:
 
 Return only the enhanced prompt, nothing else.`
 
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout for prompt enhancement
+
   try {
-    const response = await fetch("http://localhost:11434/api/generate", {
+    console.log(`Attempting prompt enhancement (attempt ${retryCount + 1}/2)...`)
+    
+    const response = await fetch("http://127.0.0.1:11434/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -108,15 +138,34 @@ Return only the enhanced prompt, nothing else.`
           max_tokens: 500,
         },
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new Error("Failed to enhance prompt")
     }
 
     const data = await response.json()
-    return data.response?.trim() || request.prompt
+    const enhancedPrompt = data.response?.trim() || request.prompt
+    
+    console.log("Prompt enhancement completed successfully")
+    return enhancedPrompt
   } catch (error) {
+    clearTimeout(timeoutId)
+    
+    if ((error as Error).name === "AbortError") {
+      console.error("Prompt enhancement timeout")
+      
+      // Retry once for timeout
+      if (retryCount < 1) {
+        console.log("Retrying prompt enhancement...")
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        return enhancePrompt(request, retryCount + 1)
+      }
+    }
+    
     console.error("Prompt enhancement error:", error)
     return request.prompt // Return original if enhancement fails
   }
@@ -166,13 +215,35 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error in AI chat route:", error)
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+    
+    // Provide more specific error messages for common issues
+    let userFriendlyMessage = "Failed to generate AI response"
+    let statusCode = 500
+    
+    if (errorMessage.includes("timeout")) {
+      userFriendlyMessage = "The AI model is taking longer than expected to respond. Please try again with a simpler request or check if the Ollama server is running properly."
+      statusCode = 408 // Request Timeout
+    } else if (errorMessage.includes("fetch") || errorMessage.includes("ECONNREFUSED")) {
+      userFriendlyMessage = "Unable to connect to the AI model server. Please ensure Ollama is running on localhost:11434."
+      statusCode = 503 // Service Unavailable
+    } else if (errorMessage.includes("API error")) {
+      userFriendlyMessage = "The AI model server returned an error. Please check the server logs and try again."
+      statusCode = 502 // Bad Gateway
+    }
+    
     return NextResponse.json(
       {
-        error: "Failed to generate AI response",
+        error: userFriendlyMessage,
         details: errorMessage,
         timestamp: new Date().toISOString(),
+        suggestions: [
+          "Try rephrasing your question to be more specific",
+          "Check if Ollama server is running: ollama serve",
+          "Verify the model is available: ollama list",
+          "Try a shorter, simpler request"
+        ]
       },
-      { status: 500 },
+      { status: statusCode },
     )
   }
 }
