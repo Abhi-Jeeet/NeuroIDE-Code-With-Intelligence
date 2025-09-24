@@ -6,6 +6,33 @@ import { Templates } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { removeAllListeners } from "process";
 
+type PlaygroundWithRelations = {
+    id: string;
+    title: string;
+    description: string | null;
+    template: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    user: {
+        id: string;
+        name: string | null;
+        email: string;
+        image: string | null;
+        role: string;
+        createdAt: Date;
+        updatedAt: Date;
+    };
+    Starmark: Array<{
+        id: string;
+        userId: string;
+        playgroundId: string;
+        isMarked: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+};
+
 export const createPlayground = async(data:{
     title:string;
     template: Templates;
@@ -31,7 +58,7 @@ export const createPlayground = async(data:{
     }
 }
 
-export const getAllPlaygroundsForUser = async()=>{
+export const getAllPlaygroundsForUser = async(): Promise<PlaygroundWithRelations[] | null>=>{
     const user = await currentUser();
 
     try {
@@ -44,9 +71,6 @@ export const getAllPlaygroundsForUser = async()=>{
                 Starmark:{
                     where:{
                         userId:user?.id
-                    },
-                    select:{
-                        isMarked:true
                     }
                 }
             }
