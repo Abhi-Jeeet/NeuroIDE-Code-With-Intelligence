@@ -274,7 +274,7 @@ export const PlaygroundEditor = ({
     }
 
     // Dispose previous provider
-    if (inlineCompletionProviderRef.current) {
+    if (inlineCompletionProviderRef.current && typeof inlineCompletionProviderRef.current.dispose === 'function') {
       inlineCompletionProviderRef.current.dispose()
       inlineCompletionProviderRef.current = null
     }
@@ -301,7 +301,7 @@ export const PlaygroundEditor = ({
     }
 
     return () => {
-      if (inlineCompletionProviderRef.current) {
+      if (inlineCompletionProviderRef.current && typeof inlineCompletionProviderRef.current.dispose === 'function') {
         inlineCompletionProviderRef.current.dispose()
         inlineCompletionProviderRef.current = null
       }
@@ -346,7 +346,7 @@ export const PlaygroundEditor = ({
     })
 
     // CRITICAL: Override Tab key with high priority and prevent default Monaco behavior
-    if (tabCommandRef.current) {
+    if (tabCommandRef.current && typeof tabCommandRef.current.dispose === 'function') {
       tabCommandRef.current.dispose()
     }
 
@@ -509,11 +509,11 @@ export const PlaygroundEditor = ({
       if (suggestionTimeoutRef.current) {
         clearTimeout(suggestionTimeoutRef.current)
       }
-      if (inlineCompletionProviderRef.current) {
+      if (inlineCompletionProviderRef.current && typeof inlineCompletionProviderRef.current.dispose === 'function') {
         inlineCompletionProviderRef.current.dispose()
         inlineCompletionProviderRef.current = null
       }
-      if (tabCommandRef.current) {
+      if (tabCommandRef.current && typeof tabCommandRef.current.dispose === 'function') {
         tabCommandRef.current.dispose()
         tabCommandRef.current = null
       }

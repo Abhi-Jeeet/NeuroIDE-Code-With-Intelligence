@@ -406,7 +406,7 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
       if (shellProcess.current) {
         shellProcess.current.kill();
       }
-      if (term.current) {
+      if (term.current && typeof term.current.dispose === 'function') {
         term.current.dispose();
         term.current = null;
       }

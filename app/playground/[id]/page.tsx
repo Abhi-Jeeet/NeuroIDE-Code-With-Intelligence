@@ -112,10 +112,12 @@ const page = () => {
         newFilename,
         newExtension,
         parentPath,
+        writeFileSync!,
+        instance,
         saveTemplateData
       );
     },
-    [handleRenameFile, saveTemplateData]
+    [handleRenameFile, writeFileSync, instance, saveTemplateData]
   );
 
   const wrappedHandleRenameFolder = useCallback(

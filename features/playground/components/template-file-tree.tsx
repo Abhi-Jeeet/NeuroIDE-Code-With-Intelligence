@@ -220,7 +220,7 @@ export function NewFileDialog({isOpen, onClose, onCreateFile}: NewFileDialogProp
                             <Input
                                 id='extension'
                             value={extension}
-                            onChange={(e)=> setFilename(e.target.value)}
+                            onChange={(e)=> setExtension(e.target.value)}
                             className='col-span-2'
                             placeholder='js'
                             />

@@ -50,6 +50,8 @@ interface FileExplorerState {
     newFilename: string,
     newExtension: string,
     parentPath: string,
+    writeFileSync: (filePath: string, content: string) => Promise<void>,
+    instance: any,
     saveTemplateData: (data: TemplateFolder) => Promise<void>
   ) => Promise<void>;
   handleRenameFolder: (
@@ -327,6 +329,8 @@ export const useFileExplorer = create<FileExplorerState>((set, get) => ({
     newFilename,
     newExtension,
     parentPath,
+    writeFileSync,
+    instance,
     saveTemplateData
   ) => {
     const { templateData, openFiles, activeFileId } = get();
@@ -388,6 +392,34 @@ export const useFileExplorer = create<FileExplorerState>((set, get) => ({
 
         // Use the passed saveTemplateData function
         await saveTemplateData(updatedTemplateData);
+
+        // Sync with web container - delete old file and create new one
+        if (writeFileSync && instance) {
+          try {
+            const oldFilePath = parentPath
+              ? `${parentPath}/${file.filename}.${file.fileExtension}`
+              : `${file.filename}.${file.fileExtension}`;
+            const newFilePath = parentPath
+              ? `${parentPath}/${newFilename}.${newExtension}`
+              : `${newFilename}.${newExtension}`;
+
+            // Delete old file
+            if (instance.fs) {
+              try {
+                await instance.fs.rm(oldFilePath);
+              } catch (error) {
+                console.warn("Could not delete old file:", error);
+              }
+            }
+
+            // Write new file with updated content
+            await writeFileSync(newFilePath, file.content || "");
+          } catch (error) {
+            console.error("Error syncing file rename with WebContainer:", error);
+            // Don't fail the entire operation if WebContainer sync fails
+          }
+        }
+
         toast.success(`Renamed file to: ${newFilename}.${newExtension}`);
       }
     } catch (error) {

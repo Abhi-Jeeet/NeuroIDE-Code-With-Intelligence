@@ -13,10 +13,10 @@ NeuroIDE is a powerful, browser-based integrated development environment (IDE) t
 - **Terminal Access**: Full terminal emulator with command execution
 
 ### 🤖 **AI-Powered Coding**
-- **Smart Code Suggestions**: Context-aware AI code completions powered by Google Gemini
+- **Smart Code Suggestions**: Context-aware AI code completions powered by Ollama
 - **AI Chat Assistant**: Get help and explanations from AI
 - **Intelligent Code Analysis**: AI understands your project structure and context
-- **Fast & Reliable**: Powered by Google Gemini 1.5 Flash for lightning-fast responses
+- **Local AI Processing**: Powered by Ollama with CodeLlama for fast, private AI assistance
 
 ### 📁 **Rich Template Collection**
 - **30+ Starter Templates**: React, Vue, Angular, Next.js, Express, Hono, and more
@@ -43,13 +43,18 @@ NeuroIDE is a powerful, browser-based integrated development environment (IDE) t
 - **Authentication**: NextAuth.js v5
 - **Code Editor**: Monaco Editor (VS Code's editor)
 - **Runtime**: WebContainer API for browser-based Node.js
-- **AI Integration**: Google Gemini 1.5 Flash for fast, reliable AI assistance
+- **AI Integration**: Ollama with CodeLlama for local, private AI assistance
 - **State Management**: Zustand
 - **Terminal**: XTerm.js
 
 
 
-## 📖 Usage
+## 🚀 Quick Start
+
+### Prerequisites
+- **Ollama Installation**: Install Ollama from [ollama.ai](https://ollama.ai)
+- **CodeLlama Model**: Pull the CodeLlama model: `ollama pull codellama:latest`
+- **Start Ollama Server**: Run `ollama serve` to start the local AI server
 
 ### Creating a New Project
 1. Sign in with GitHub or Google
@@ -69,8 +74,9 @@ NeuroIDE is a powerful, browser-based integrated development environment (IDE) t
 - **Toggle AI**: Enable/disable AI suggestions in the editor
 - **Chat Assistant**: Ask questions and get coding help
 - **Context Awareness**: AI understands your current file and project
-- **Fast Responses**: Powered by Google Gemini 1.5 Flash for instant suggestions
+- **Local Processing**: Powered by Ollama with CodeLlama for private, fast suggestions
 - **Smart Code Completion**: Context-aware code suggestions based on your project structure
+- **Offline Capable**: Works with local Ollama server for complete privacy
 
 ## 🏗️ Project Structure
 
