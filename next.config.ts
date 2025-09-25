@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true, 
-  },
   images: {
     remotePatterns: [
       {
@@ -25,16 +22,13 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none',
+            value: 'require-corp',
           },
         ],
       },
     ];
   },
-  reactStrictMode: false,
-  turbopack: {
-    root: __dirname,
-  },
+  reactStrictMode:false
 };
 
 export default nextConfig;

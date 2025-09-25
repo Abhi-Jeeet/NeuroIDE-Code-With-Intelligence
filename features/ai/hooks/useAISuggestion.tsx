@@ -35,75 +35,77 @@ export const useAISuggestions = (): UseAISuggestionsReturn => {
     console.log("AI Suggestions Enabled:", state.isEnabled);
     console.log("Editor Instance Available:", !!editor);
 
-    // Check if AI suggestions are enabled
-    if (!state.isEnabled) {
-      console.warn("AI suggestions are disabled.");
-      return;
-    }
-
-    if (!editor) {
-      console.warn("Editor instance is not available.");
-      return;
-    }
-
-    const model = editor.getModel();
-    const cursorPosition = editor.getPosition();
-
-    if (!model || !cursorPosition) {
-      console.warn("Editor model or cursor position is not available.");
-      return;
-    }
-
-    // Set loading state
-    setState((prev) => ({ ...prev, isLoading: true }));
-
-    try {
-      const payload = {
-        fileContent: model.getValue(),
-        cursorLine: cursorPosition.lineNumber - 1,
-        cursorColumn: cursorPosition.column - 1,
-        suggestionType: type,
-      };
-      console.log("Request payload:", payload);
-
-      const response = await fetch("/api/code-suggestion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      console.log("API response status:", response.status);
-      console.log("API response ok:", response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API error response:", errorText);
-        throw new Error(`API responded with status ${response.status}: ${errorText}`);
+    // Use functional state update to get fresh state
+    setState((currentState) => {
+      if (!currentState.isEnabled) {
+        console.warn("AI suggestions are disabled.");
+        return currentState;
       }
 
-      const data = await response.json();
-      console.log("API response data:", data);
-
-      if (data.suggestion) {
-        const suggestionText = data.suggestion.trim();
-        setState((prev) => ({
-          ...prev,
-          suggestion: suggestionText,
-          position: {
-            line: cursorPosition.lineNumber,
-            column: cursorPosition.column,
-          },
-          isLoading: false,
-        }));
-      } else {
-        console.warn("No suggestion received from API.");
-        setState((prev) => ({ ...prev, isLoading: false }));
+      if (!editor) {
+        console.warn("Editor instance is not available.");
+        return currentState;
       }
-    } catch (error) {
-      console.error("Error fetching code suggestion:", error);
-      setState((prev) => ({ ...prev, isLoading: false }));
-    }
-  }, [state.isEnabled]);
+
+      const model = editor.getModel();
+      const cursorPosition = editor.getPosition();
+
+      if (!model || !cursorPosition) {
+        console.warn("Editor model or cursor position is not available.");
+        return currentState;
+      }
+
+      // Set loading state immediately
+      const newState = { ...currentState, isLoading: true };
+
+      // Perform the async operation
+      (async () => {
+        try {
+          const payload = {
+            fileContent: model.getValue(),
+            cursorLine: cursorPosition.lineNumber - 1,
+            cursorColumn: cursorPosition.column - 1,
+            suggestionType: type,
+          };
+          console.log("Request payload:", payload);
+
+          const response = await fetch("/api/code-suggestion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`API responded with status ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log("API response:", data);
+
+          if (data.suggestion) {
+            const suggestionText = data.suggestion.trim();
+            setState((prev) => ({
+              ...prev,
+              suggestion: suggestionText,
+              position: {
+                line: cursorPosition.lineNumber,
+                column: cursorPosition.column,
+              },
+              isLoading: false,
+            }));
+          } else {
+            console.warn("No suggestion received from API.");
+            setState((prev) => ({ ...prev, isLoading: false }));
+          }
+        } catch (error) {
+          console.error("Error fetching code suggestion:", error);
+          setState((prev) => ({ ...prev, isLoading: false }));
+        }
+      })();
+
+      return newState;
+    });
+  }, []); // Remove state.isEnabled from dependencies to prevent stale closures
 
   const acceptSuggestion = useCallback(
     (editor: any, monaco: any) => {

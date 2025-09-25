@@ -57,31 +57,6 @@ const ToggleAI: React.FC<ToggleAIProps> = ({
   activeFeature,
 }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [aiStatus, setAiStatus] = useState<{
-    configured: boolean;
-    message: string;
-  } | null>(null);
-
-  // Check AI configuration on mount
-  React.useEffect(() => {
-    const checkAiStatus = async () => {
-      try {
-        const response = await fetch("/api/ai-test");
-        const data = await response.json();
-        setAiStatus({
-          configured: data.configured,
-          message: data.message
-        });
-      } catch (error) {
-        setAiStatus({
-          configured: false,
-          message: "Failed to check AI configuration"
-        });
-      }
-    };
-    
-    checkAiStatus();
-  }, []);
 
   // Dummy handler for code insertion from AI chat panel
   const handleInsertCode = (code: string, fileName?: string, position?: { line: number; column: number }) => {
@@ -122,12 +97,8 @@ const ToggleAI: React.FC<ToggleAIProps> = ({
               <Bot className="h-4 w-4" />
             )}
             <span>AI</span>
-            {aiStatus?.configured ? (
-              isEnabled ? (
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              ) : (
-                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-              )
+            {isEnabled ? (
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             ) : (
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
             )}
@@ -151,19 +122,6 @@ const ToggleAI: React.FC<ToggleAIProps> = ({
               {isEnabled ? "Active" : "Inactive"}
             </Badge>
           </DropdownMenuLabel>
-          
-          {aiStatus && (
-            <div className="px-2 py-1">
-              <div className={cn(
-                "text-xs p-2 rounded",
-                aiStatus.configured 
-                  ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                  : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-              )}>
-                {aiStatus.message}
-              </div>
-            </div>
-          )}
           
           {suggestionLoading && activeFeature && (
             <div className="px-3 pb-3">

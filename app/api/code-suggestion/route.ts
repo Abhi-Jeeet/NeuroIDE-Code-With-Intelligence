@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { AIService } from "@/lib/ai-providers"
 
 interface CodeSuggestionRequest {
   fileContent: string
@@ -22,30 +21,10 @@ interface CodeContext {
   incompletePatterns: string[]
 }
 
-// Get AI provider configuration from environment variables
-function getAIProvider(): AIService {
-  const provider = process.env.AI_PROVIDER || "gemini";
-  const apiKey = process.env.AI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error(`API key required for ${provider} provider`);
-  }
-  
-  return new AIService(provider, apiKey);
-}
-
 export async function POST(request: NextRequest) {
   try {
-    console.log("Code suggestion API called");
-    console.log("Environment variables:", {
-      AI_PROVIDER: process.env.AI_PROVIDER,
-      AI_API_KEY: process.env.AI_API_KEY ? "***SET***" : "NOT SET"
-    });
-
     const body: CodeSuggestionRequest = await request.json()
     const { fileContent, cursorLine, cursorColumn, suggestionType, fileName } = body
-
-    console.log("Request body:", { fileContent: fileContent.substring(0, 100) + "...", cursorLine, cursorColumn, suggestionType, fileName });
 
     // Validate input
     if (!fileContent || cursorLine < 0 || cursorColumn < 0 || !suggestionType) {
@@ -58,10 +37,8 @@ export async function POST(request: NextRequest) {
     // Build AI prompt
     const prompt = buildPrompt(context, suggestionType)
 
-    // Call AI service
+    // Call AI service (replace with your AI service)
     const suggestion = await generateSuggestion(prompt)
-
-    console.log("Generated suggestion:", suggestion.substring(0, 100) + "...");
 
     return NextResponse.json({
       suggestion,
@@ -71,20 +48,11 @@ export async function POST(request: NextRequest) {
         framework: context.framework,
         position: context.cursorPosition,
         generatedAt: new Date().toISOString(),
-        provider: process.env.AI_PROVIDER || "gemini",
       },
     })
   } catch (error: any) {
     console.error("Context analysis error:", error)
-    return NextResponse.json({ 
-      error: "Internal server error", 
-      message: error.message,
-      details: error.stack,
-      env: {
-        AI_PROVIDER: process.env.AI_PROVIDER,
-        AI_API_KEY: process.env.AI_API_KEY ? "***SET***" : "NOT SET"
-      }
-    }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error", message: error.message }, { status: 500 })
   }
 }
 
@@ -157,27 +125,42 @@ Generate suggestion:`
 }
 
 /**
- * Generate suggestion using AI service
+ * Generate suggestion using AI service with fallback
  */
 async function generateSuggestion(prompt: string): Promise<string> {
   try {
-    const aiService = getAIProvider();
-    const suggestion = await aiService.generateCodeSuggestion(prompt, {
-      temperature: 0.3,
-      maxTokens: 300,
-    });
+    // Try to connect to local Ollama server
+    const response = await fetch("http://127.0.0.1:11434/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "codellama:latest",
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          max_tokens: 300,
+        },
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`AI service error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    let suggestion = data.response
 
     // Clean up the suggestion
-    let cleanedSuggestion = suggestion;
-    if (cleanedSuggestion.includes("```")) {
-      const codeMatch = cleanedSuggestion.match(/```[\w]*\n?([\s\S]*?)```/)
-      cleanedSuggestion = codeMatch ? codeMatch[1].trim() : cleanedSuggestion
+    if (suggestion.includes("```")) {
+      const codeMatch = suggestion.match(/```[\w]*\n?([\s\S]*?)```/)
+      suggestion = codeMatch ? codeMatch[1].trim() : suggestion
     }
 
     // Remove cursor markers if present
-    cleanedSuggestion = cleanedSuggestion.replace(/\|CURSOR\|/g, "").trim()
+    suggestion = suggestion.replace(/\|CURSOR\|/g, "").trim()
 
-    return cleanedSuggestion || generateMockSuggestion(prompt);
+    return suggestion
   } catch (error) {
     console.error("AI generation error:", error)
     
@@ -195,7 +178,7 @@ function generateMockSuggestion(prompt: string): string {
   const contextLine = lines.find(line => line.includes('|CURSOR|'))
   
   if (!contextLine) {
-    return "// AI suggestion unavailable - check your AI provider configuration"
+    return "// AI suggestion unavailable - start Ollama server for real suggestions"
   }
 
   const beforeCursor = contextLine.split('|CURSOR|')[0]

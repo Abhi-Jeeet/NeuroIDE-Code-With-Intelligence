@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { AIService, ChatMessage as AIChatMessage } from "@/lib/ai-providers"
 
 interface ChatMessage {
   role: "user" | "assistant"
@@ -15,18 +14,6 @@ interface EnhancePromptRequest {
   }
 }
 
-// Get AI provider configuration from environment variables
-function getAIProvider(): AIService {
-  const provider = process.env.AI_PROVIDER || "gemini";
-  const apiKey = process.env.AI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error(`API key required for ${provider} provider`);
-  }
-  
-  return new AIService(provider, apiKey);
-}
-
 async function generateAIResponse(messages: ChatMessage[], retryCount = 0): Promise<string> {
   const systemPrompt = `You are an expert AI coding assistant. You help developers with:
 - Code explanations and debugging
@@ -38,21 +25,71 @@ async function generateAIResponse(messages: ChatMessage[], retryCount = 0): Prom
 Always provide clear, practical answers. When showing code, use proper formatting with language-specific syntax.
 Keep responses concise but comprehensive. Use code blocks with language specification when providing code examples.`
 
-  const fullMessages: AIChatMessage[] = [{ role: "system", content: systemPrompt }, ...messages];
-  
+  const fullMessages = [{ role: "system", content: systemPrompt }, ...messages]
+  const prompt = fullMessages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n")
+
+  // Increased timeout to 60 seconds for complex requests
+  const timeoutDuration = 60000
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutDuration)
+
   try {
-    console.log(`Attempting AI request with ${process.env.AI_PROVIDER || "gemini"} (attempt ${retryCount + 1}/3)...`)
+    console.log(`Attempting AI request (attempt ${retryCount + 1}/3)...`)
     
-    const aiService = getAIProvider();
-    const response = await aiService.generateResponse(fullMessages, {
-      temperature: 0.7,
-      maxTokens: 1000,
-    });
+    const response = await fetch("http://127.0.0.1:11434/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "codellama:latest",
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          top_p: 0.9,
+          max_tokens: 1000,
+          num_predict: 1000,
+          repeat_penalty: 1.1,
+          context_length: 4096,
+        },
+      }),
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("Error from AI model API:", errorText)
+      throw new Error(`AI model API error: ${response.status} - ${errorText}`)
+    }
+
+    const data = await response.json()
+    if (!data.response) {
+      throw new Error("No response from AI model")
+    }
     
     console.log("AI request completed successfully")
-    return response.trim();
+    return data.response.trim()
   } catch (error) {
-    console.error("AI generation error:", error);
+    clearTimeout(timeoutId)
+    
+    if ((error as Error).name === "AbortError") {
+      const timeoutError = new Error("Request timeout: AI model took too long to respond (60s timeout)")
+      console.error("Request timeout:", timeoutError.message)
+      
+      // Retry with exponential backoff if we haven't exceeded max retries
+      if (retryCount < 2) {
+        console.log(`Retrying request in ${(retryCount + 1) * 2} seconds...`)
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000))
+        return generateAIResponse(messages, retryCount + 1)
+      }
+      
+      throw timeoutError
+    }
+    
+    console.error("AI generation error:", error)
     
     // Retry for network errors if we haven't exceeded max retries
     if (retryCount < 2 && (error as Error).message.includes('fetch')) {
@@ -61,7 +98,7 @@ Keep responses concise but comprehensive. Use code blocks with language specific
       return generateAIResponse(messages, retryCount + 1)
     }
     
-    throw error;
+    throw error
   }
 }
 
@@ -81,30 +118,56 @@ Enhanced prompt should:
 
 Return only the enhanced prompt, nothing else.`
 
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout for prompt enhancement
+
   try {
     console.log(`Attempting prompt enhancement (attempt ${retryCount + 1}/2)...`)
     
-    const aiService = getAIProvider();
-    const response = await aiService.generateResponse([
-      { role: "user", content: enhancementPrompt }
-    ], {
-      temperature: 0.3,
-      maxTokens: 500,
-    });
+    const response = await fetch("http://127.0.0.1:11434/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "codellama:latest",
+        prompt: enhancementPrompt,
+        stream: false,
+        options: {
+          temperature: 0.3,
+          max_tokens: 500,
+        },
+      }),
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      throw new Error("Failed to enhance prompt")
+    }
+
+    const data = await response.json()
+    const enhancedPrompt = data.response?.trim() || request.prompt
     
     console.log("Prompt enhancement completed successfully")
-    return response.trim() || request.prompt;
+    return enhancedPrompt
   } catch (error) {
-    console.error("Prompt enhancement error:", error);
+    clearTimeout(timeoutId)
     
-    // Retry once for timeout
-    if (retryCount < 1) {
-      console.log("Retrying prompt enhancement...")
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      return enhancePrompt(request, retryCount + 1)
+    if ((error as Error).name === "AbortError") {
+      console.error("Prompt enhancement timeout")
+      
+      // Retry once for timeout
+      if (retryCount < 1) {
+        console.log("Retrying prompt enhancement...")
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        return enhancePrompt(request, retryCount + 1)
+      }
     }
     
-    return request.prompt; // Return original if enhancement fails
+    console.error("Prompt enhancement error:", error)
+    return request.prompt // Return original if enhancement fails
   }
 }
 
@@ -148,7 +211,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       response: aiResponse,
       timestamp: new Date().toISOString(),
-      provider: process.env.AI_PROVIDER || "gemini",
     })
   } catch (error) {
     console.error("Error in AI chat route:", error)
@@ -159,17 +221,14 @@ export async function POST(req: NextRequest) {
     let statusCode = 500
     
     if (errorMessage.includes("timeout")) {
-      userFriendlyMessage = "The AI model is taking longer than expected to respond. Please try again with a simpler request."
+      userFriendlyMessage = "The AI model is taking longer than expected to respond. Please try again with a simpler request or check if the Ollama server is running properly."
       statusCode = 408 // Request Timeout
     } else if (errorMessage.includes("fetch") || errorMessage.includes("ECONNREFUSED")) {
-      userFriendlyMessage = "Unable to connect to the AI service. Please check your API key and internet connection."
+      userFriendlyMessage = "Unable to connect to the AI model server. Please ensure Ollama is running on localhost:11434."
       statusCode = 503 // Service Unavailable
     } else if (errorMessage.includes("API error")) {
-      userFriendlyMessage = "The AI service returned an error. Please check your API key and try again."
+      userFriendlyMessage = "The AI model server returned an error. Please check the server logs and try again."
       statusCode = 502 // Bad Gateway
-    } else if (errorMessage.includes("API key")) {
-      userFriendlyMessage = "AI service configuration error. Please check your API key."
-      statusCode = 401 // Unauthorized
     }
     
     return NextResponse.json(
@@ -179,8 +238,8 @@ export async function POST(req: NextRequest) {
         timestamp: new Date().toISOString(),
         suggestions: [
           "Try rephrasing your question to be more specific",
-          "Check your AI provider configuration",
-          "Verify your API key is correct",
+          "Check if Ollama server is running: ollama serve",
+          "Verify the model is available: ollama list",
           "Try a shorter, simpler request"
         ]
       },
@@ -193,7 +252,6 @@ export async function GET() {
   return NextResponse.json({
     status: "AI Chat API is running",
     timestamp: new Date().toISOString(),
-    provider: process.env.AI_PROVIDER || "gemini",
     info: "Use POST method to send chat messages or enhance prompts",
   })
 }

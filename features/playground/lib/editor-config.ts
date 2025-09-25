@@ -272,18 +272,18 @@ export const defaultEditorOptions = {
   // Layout
   minimap: { 
     enabled: true,
-    size: "proportional" as const,
-    showSlider: "mouseover" as const
+    size: "proportional",
+    showSlider: "mouseover"
   },
   scrollBeyondLastLine: false,
   automaticLayout: true,
   padding: { top: 16, bottom: 16 },
   
   // Line settings
-  lineNumbers: "on" as const,
+  lineNumbers: "on",
   lineHeight: 20,
-  renderLineHighlight: "all" as const,
-  renderWhitespace: "selection" as const,
+  renderLineHighlight: "all",
+  renderWhitespace: "selection",
   
   // Indentation
   tabSize: 2,
@@ -291,15 +291,15 @@ export const defaultEditorOptions = {
   detectIndentation: true,
   
   // Word wrapping
-  wordWrap: "on" as const,
+  wordWrap: "on",
   wordWrapColumn: 120,
-  wrappingIndent: "indent" as const,
+  wrappingIndent: "indent",
   
   // Code folding
   folding: true,
   foldingHighlight: true,
-  foldingStrategy: "indentation" as const,
-  showFoldingControls: "mouseover" as const,
+  foldingStrategy: "indentation",
+  showFoldingControls: "mouseover",
   
   // Scrolling
   smoothScrolling: true,
@@ -307,15 +307,15 @@ export const defaultEditorOptions = {
   fastScrollSensitivity: 5,
   
   // Selection
-  multiCursorModifier: "ctrlCmd" as const,
+  multiCursorModifier: "ctrlCmd",
   selectionHighlight: true,
-  occurrencesHighlight: "multiFile" as const,
+  occurrencesHighlight: true,
   
   // Suggestions
   suggestOnTriggerCharacters: true,
-  acceptSuggestionOnEnter: "on" as const,
-  tabCompletion: "on" as const,
-  wordBasedSuggestions: "currentDocument" as const,
+  acceptSuggestionOnEnter: "on",
+  tabCompletion: "on",
+  wordBasedSuggestions: true,
   quickSuggestions: {
     other: true,
     comments: false,
@@ -327,7 +327,7 @@ export const defaultEditorOptions = {
   formatOnType: true,
   
   // Bracket matching
-  matchBrackets: "always" as const,
+  matchBrackets: "always",
   bracketPairColorization: {
     enabled: true
   },
@@ -342,19 +342,19 @@ export const defaultEditorOptions = {
   disableMonospaceOptimizations: false,
   
   // Accessibility
-  accessibilitySupport: "auto" as const,
+  accessibilitySupport: "auto",
   
   // Cursor
-  cursorBlinking: "smooth" as const,
-  cursorSmoothCaretAnimation: "on" as const,
-  cursorStyle: "line" as const,
+  cursorBlinking: "smooth",
+  cursorSmoothCaretAnimation: true,
+  cursorStyle: "line",
   cursorWidth: 2,
   
   // Find
   find: {
     addExtraSpaceOnTop: false,
-    autoFindInSelection: "never" as const,
-    seedSearchStringFromSelection: "always" as const
+    autoFindInSelection: "never",
+    seedSearchStringFromSelection: "always"
   },
   
   // Hover
